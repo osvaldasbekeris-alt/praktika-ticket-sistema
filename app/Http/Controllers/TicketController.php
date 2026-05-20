@@ -2,63 +2,100 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ticket;
+use App\Models\Category;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // Sąrašas
     public function index()
     {
-        //
+        $perPage = (int) Setting::get('items_per_page', 10);
+
+        $tickets = Ticket::with(['user', 'category'])
+            ->latest()
+            ->paginate($perPage);
+
+        return view('tickets.index', compact('tickets'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    // Kūrimo forma
     public function create()
     {
-        //
+        $categories = Category::all();
+        return view('tickets.create', compact('categories'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Išsaugojimas
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'title'       => 'required|min:3|max:255',
+            'description' => 'required|min:10',
+            'category_id' => 'required|exists:categories,id',
+            'priority'    => 'required|in:low,medium,high',
+        ]);
+
+        $data['user_id'] = auth()->id();
+        $data['status']  = 'new';
+
+        Ticket::create($data);
+
+        return redirect()->route('tickets.index')
+            ->with('success', 'Bilietas sėkmingai sukurtas!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    // Peržiūra
+    public function show(Ticket $ticket)
     {
-        //
+        $ticket->load(['user', 'category', 'comments.user']);
+        return view('tickets.show', compact('ticket'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    // Redagavimo forma
+    public function edit(Ticket $ticket)
     {
-        //
+        // Tik savininkas arba admin gali redaguoti
+        if (auth()->id() !== $ticket->user_id && !auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $categories = Category::all();
+        return view('tickets.edit', compact('ticket', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    // Atnaujinimas
+    public function update(Request $request, Ticket $ticket)
     {
-        //
+        if (auth()->id() !== $ticket->user_id && !auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'title'       => 'required|min:3|max:255',
+            'description' => 'required|min:10',
+            'category_id' => 'required|exists:categories,id',
+            'priority'    => 'required|in:low,medium,high',
+        ]);
+
+        $ticket->update($data);
+
+        return redirect()->route('tickets.show', $ticket)
+            ->with('success', 'Bilietas atnaujintas!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    // Trynimas
+    public function destroy(Ticket $ticket)
     {
-        //
+        if (auth()->id() !== $ticket->user_id && !auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $ticket->delete();
+
+        return redirect()->route('tickets.index')
+            ->with('success', 'Bilietas ištrintas.');
     }
 }
