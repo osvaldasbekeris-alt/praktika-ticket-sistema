@@ -27,6 +27,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports/pdf', [ReportController::class, 'pdf'])
         ->name('reports.pdf');
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->name('reports.index');
     Route::post('/reports/send', [ReportController::class, 'send'])
         ->name('reports.send');
 });
