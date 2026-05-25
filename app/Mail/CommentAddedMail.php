@@ -32,4 +32,4 @@ class CommentAddedMail extends Mailable
             view: 'emails.comment-added',
         );
     }
-}
+}   
