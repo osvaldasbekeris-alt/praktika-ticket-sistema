@@ -10,11 +10,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ReportController extends Controller
 {
     public function index()
-{
-    $adminEmail = \App\Models\Setting::get('admin_email', '');
-    return view('reports.send', compact('adminEmail'));
-}
+    {
+        $adminEmail = Setting::get('admin_email', '');
+        return view('reports.send', compact('adminEmail'));
+    }
 
+    // Rodyti / parsisiųsti PDF
     public function pdf()
     {
         $tickets = Ticket::with(['user', 'category'])
@@ -30,6 +31,7 @@ class ReportController extends Controller
         return $pdf->stream('aktyvios-problemos.pdf');
     }
 
+    // Siųsti PDF el. paštu
     public function send(Request $request)
     {
         $request->validate([
