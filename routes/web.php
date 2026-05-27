@@ -8,14 +8,12 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ReportController;
 
-
 Route::get('/', function () {
     return redirect()->route('tickets.index');
 });
 
 Route::middleware(['auth'])->group(function () {
 
-    
     Route::resource('tickets', TicketController::class);
 
     Route::post('/tickets/{ticket}/comments', [CommentController::class, 'store'])
@@ -24,15 +22,10 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])
         ->name('tickets.status');
 
-
-    Route::get('/reports/pdf', [ReportController::class, 'pdf'])
-        ->name('reports.pdf');
-    Route::get('/reports', [ReportController::class, 'index'])
-        ->name('reports.index');
-    Route::post('/reports/send', [ReportController::class, 'send'])
-        ->name('reports.send');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+    Route::post('/reports/send', [ReportController::class, 'send'])->name('reports.send');
 });
-
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('categories', CategoryController::class);
